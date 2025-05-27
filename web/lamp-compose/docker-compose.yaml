@@ -1,0 +1,87 @@
+services:
+  php:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+
+      container_name: barbara-ifsp-php
+      restart: always
+      volumes:
+        - ./web:/var/www/html/
+      networks:
+        - lamp-network
+      ports:
+        - "80:80"
+      links:
+        - mysql
+        - postgres
+      
+postgres:
+  image: postgres-12
+  container_name: birazn-ifsp-pgsql
+  restart: always
+  enviroment:
+    POSTGRES_PASSWORD: postdba
+    POSTGRES_USER: postgres
+  ports:
+    - "5432:5432"
+  volumes:
+    - ./postgres:/var/lib/postgresql/data
+  networks:
+    - lamp-network
+
+pgadmin:
+  image: dpage/pgadmin4
+  container_name: rebecka-ifsp-pgadmin 
+  enviroment:
+    PGADMIN_DEFAULT_EMAIL: postgres@servidor.com
+    PGADMIN_DEFAULT_PASSWORD:postdba
+  ports:
+    - 8081:80
+  depends_on:
+    - postgres  
+  networks:
+    - lamp-network
+
+mysql:
+  image: mysql:5.7
+  container_name: rebecka-ifsp-mysql
+  restart: always
+  volumes:
+    - ./mysql:/var/lib/mysql
+  ports:
+    - "3306:3306"
+  enviroment:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: teste
+  networks:
+    - lamp-network
+
+phpmyadmin:
+    build:
+      context: ./phpmyadmin
+      dockerfile: Dockerfile
+
+    container_name: birazn-ifsp-phpmyadmin
+    restart: always
+    volumes:
+      - /sessions
+    ports:
+      - "8080:80"
+    links:
+      - mysql
+    environment:
+      PMA_ARBITRARY: 0 # 1 Isso executará o phpMyAdmin com um servidor arbitrário, permitindo que você especifique o servidor MySQL/MariaDB na página de login.
+      PMA_HOST: mysql
+    networks:
+      - lamp-network
+
+networks:
+  lamp-network:
+    driver: bridge
+
+volumes:
+  postgres:
+  mysql:
+  web:
+    driver: local  
